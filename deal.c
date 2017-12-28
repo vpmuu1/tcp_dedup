@@ -114,7 +114,7 @@ long dodec(struct wrap_pkt  *inwp, char * obuf){
 	  
     MD5_Final(md,&ctx);
 	if (memcmp(md,inwp->md5,sizeof(md)))  {
-		printf("md5 err,inwp->size=%d\n",inwp->size);
+		printf("md5 err,inwp->size=%ld\n",inwp->size);
 		return -1;
 	}
 	if (inwp->deduped==1) return  BUFSIZE;

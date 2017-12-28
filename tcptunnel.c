@@ -437,18 +437,18 @@ int use_tunnel(void)
 					//printf("do xrecv recv from myc %d,wp.size=%d,count=%d\n",sizeof(struct wrap_pkt)-BUFSIZE+wp.size-count,wp.size,count);
 					xrecv((char *)&wp+count, sizeof(struct wrap_pkt)-BUFSIZE+wp.size-count,rc.client_socket);
 				}
-                dbufl=dodec(&wp, buffer);
+        		        dbufl=dodec(&wp, buffer);
 				//decode & send to real server
 				//printf("decode & send to real server:%d\n",dbufl);
-                send(rc.remote_socket, buffer, dbufl, 0);
-            } else  {
+		                send(rc.remote_socket, buffer, dbufl, 0);
+		        } else  {
 				//recv from real client
 				//printf("recv from real client : %d \n",count);
-                dbufl=doenc(buffer, count, &wp);
+                		dbufl=doenc(buffer, count, &wp);
 				//send to my server
 				//printf("send to my server :dbufl=%d,wp.size=%d\n",dbufl,wp.size);
-                send(rc.remote_socket, &wp, dbufl, 0);
-            }
+		                send(rc.remote_socket, &wp, dbufl, 0);
+            		}
 //	                        send(rc.remote_socket, buffer, count, 0);
 
 			if (settings.log)
@@ -481,15 +481,15 @@ int use_tunnel(void)
 				return 0;
 			}
 
-            if (settings.as_server) { 
+		        if (settings.as_server) { 
 				//recv from real server
 				//xrecv((char *)&wp+count, sizeof(struct wrap_pkt)-BUFSIZE+wp.size-count,rc.client_socket);
 				//printf("recv from real server:%d\n",count);
-                dbufl=doenc(buffer, count, &wp);
+                		dbufl=doenc(buffer, count, &wp);
 				//printf("send to my client dbufl=%d,wp.size=%d\n",dbufl,wp.size);
 				//send to my client
-                send(rc.client_socket,&wp, dbufl, 0);
-            } else  {
+		                send(rc.client_socket,&wp, dbufl, 0);
+	                } else  {
 				//recv from my server
 				memcpy(&wp, buffer,count);				
 				//printf("recv from my server %d,wp.size=%d,count=%d\n",sizeof(struct wrap_pkt)-BUFSIZE+wp.size-count,wp.size,count);
@@ -498,19 +498,19 @@ int use_tunnel(void)
 					xrecv((char *)&wp+count, sizeof(struct wrap_pkt)-BUFSIZE+wp.size-count,rc.remote_socket);
 				}
 
-                dbufl=dodec(&wp, buffer);
-				//printf("send to real client\n");
-				//send to real client
-                send(rc.client_socket, buffer, dbufl, 0);
+            		dbufl=dodec(&wp, buffer);
+			//printf("send to real client\n");
+			//send to real client
+	                send(rc.client_socket, buffer, dbufl, 0);
             }
 			
 						 
-			if (settings.log)
-			{
-				fwrite(buffer, sizeof(char), count, stdout);
-				fflush(stdout);
-			}
+		if (settings.log)
+		{
+			fwrite(buffer, sizeof(char), count, stdout);
+			fflush(stdout);
 		}
+	   }
 	}
 
 	return 0;
