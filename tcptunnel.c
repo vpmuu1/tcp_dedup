@@ -430,19 +430,23 @@ int use_tunnel(void)
 			}
 			
 			if (settings.as_server) {
+				//recv from my client
 				memcpy(&wp, buffer,count);
-				//printf("recv from myc %d,wp.size=%d,count=%d\n",sizeof(struct wrap_pkt)-BUFSIZE+wp.size-count,wp.size,count);
+				//printf("recv from my client %d,wp.size=%d,count=%d\n",sizeof(struct wrap_pkt)-BUFSIZE+wp.size-count,wp.size,count);
 				if (sizeof(struct wrap_pkt)-BUFSIZE+wp.size>count) {
 					//printf("do xrecv recv from myc %d,wp.size=%d,count=%d\n",sizeof(struct wrap_pkt)-BUFSIZE+wp.size-count,wp.size,count);
 					xrecv((char *)&wp+count, sizeof(struct wrap_pkt)-BUFSIZE+wp.size-count,rc.client_socket);
 				}
                 dbufl=dodec(&wp, buffer);
-				//printf("dec & send to sshd:%d\n",dbufl);
+				//decode & send to real server
+				//printf("decode & send to real server:%d\n",dbufl);
                 send(rc.remote_socket, buffer, dbufl, 0);
             } else  {
-				//printf("recv from ssh : %d \n",count);
+				//recv from real client
+				//printf("recv from real client : %d \n",count);
                 dbufl=doenc(buffer, count, &wp);
-				//printf("send to mys :dbufl=%d,wp.size=%d\n",dbufl,wp.size);
+				//send to my server
+				//printf("send to my server :dbufl=%d,wp.size=%d\n",dbufl,wp.size);
                 send(rc.remote_socket, &wp, dbufl, 0);
             }
 //	                        send(rc.remote_socket, buffer, count, 0);
@@ -477,22 +481,26 @@ int use_tunnel(void)
 				return 0;
 			}
 
-            if (settings.as_server) {
+            if (settings.as_server) { 
+				//recv from real server
 				//xrecv((char *)&wp+count, sizeof(struct wrap_pkt)-BUFSIZE+wp.size-count,rc.client_socket);
-				//printf("recv from sshd:%d\n",count);
+				//printf("recv from real server:%d\n",count);
                 dbufl=doenc(buffer, count, &wp);
-				//printf("svr send to myc dbufl=%d,wp.size=%d\n",dbufl,wp.size);				
+				//printf("send to my client dbufl=%d,wp.size=%d\n",dbufl,wp.size);
+				//send to my client
                 send(rc.client_socket,&wp, dbufl, 0);
             } else  {
-				memcpy(&wp, buffer,count);
-				//printf("recv from mys %d,wp.size=%d,count=%d\n",sizeof(struct wrap_pkt)-BUFSIZE+wp.size-count,wp.size,count);
+				//recv from my server
+				memcpy(&wp, buffer,count);				
+				//printf("recv from my server %d,wp.size=%d,count=%d\n",sizeof(struct wrap_pkt)-BUFSIZE+wp.size-count,wp.size,count);
 				if (sizeof(struct wrap_pkt)-BUFSIZE+wp.size>count) {
 					//printf("client xrecv %d,wp.size=%d,count=%d\n",sizeof(struct wrap_pkt)-BUFSIZE+wp.size-count,wp.size,count);
 					xrecv((char *)&wp+count, sizeof(struct wrap_pkt)-BUFSIZE+wp.size-count,rc.remote_socket);
 				}
 
                 dbufl=dodec(&wp, buffer);
-				//printf("send to sshc\n");
+				//printf("send to real client\n");
+				//send to real client
                 send(rc.client_socket, buffer, dbufl, 0);
             }
 			
