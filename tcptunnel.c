@@ -41,7 +41,7 @@
 #include "deal.h"
 #include "kissdb.h"
 
-//#define  BUFSIZE 4096*128
+static int first_client_con=0; 
 
 //int deal(char *buffer, int count, char* dbuf,int encode);
 
@@ -296,6 +296,7 @@ int wait_for_clients(void)
 	client_addr_size = sizeof(struct sockaddr_in);
 
 	rc.client_socket = accept(rc.server_socket, (struct sockaddr *) &rc.client_addr, &client_addr_size);
+	first_client_con=1;
 	if (rc.client_socket < 0)
 	{
 		if (errno != EINTR)
@@ -411,8 +412,9 @@ int use_tunnel(void)
 		if (FD_ISSET(rc.client_socket, &io)) //recv from client
 		{
 			bs=sizeof(buffer);
-			if (settings.as_server) 
+			if (settings.as_server) //recv from my client
 				bs=sizeof(struct wrap_pkt)-BUFSIZE;
+			
 			int count = recv(rc.client_socket, buffer, bs, 0);
 			if (count < 0)
 			{
@@ -459,12 +461,22 @@ int use_tunnel(void)
 			}
 		}
 
-		if (FD_ISSET(rc.remote_socket, &io))  //
+		if (FD_ISSET(rc.remote_socket, &io))  //recv from server 
 		{
 			bs=sizeof(buffer);
-			if (!settings.as_server) 
+			if (!settings.as_server) //recv from mys
 				bs=sizeof(struct wrap_pkt)-BUFSIZE;
+			else { //recv from real svr
+				int pktsize=0,cnt=0;
+				do {
+					pktsize=recv(rc.remote_socket, buffer, bs, MSG_PEEK);
+					usleep(1000);
+					//if (pktsize<BUFSIZE) 
+						//printf("read from r_svr %d/%d\n",pktsize,BUFSIZE);
+				} while (pktsize!=0 && pktsize<BUFSIZE && cnt++<10);
+			}
 			//printf("bs=%d\n",bs);
+			
 			int count = recv(rc.remote_socket, buffer, bs, 0);
 			if (count < 0)
 			{
@@ -481,15 +493,19 @@ int use_tunnel(void)
 				return 0;
 			}
 
-		        if (settings.as_server) { 
+		    if (settings.as_server) { 
 				//recv from real server
 				//xrecv((char *)&wp+count, sizeof(struct wrap_pkt)-BUFSIZE+wp.size-count,rc.client_socket);
 				//printf("recv from real server:%d\n",count);
-                		dbufl=doenc(buffer, count, &wp);
+				if (first_client_con) {
+					first_client_con=0;
+					usleep(1000*100);
+				}
+             	dbufl=doenc(buffer, count, &wp);
 				//printf("send to my client dbufl=%d,wp.size=%d\n",dbufl,wp.size);
 				//send to my client
 		                send(rc.client_socket,&wp, dbufl, 0);
-	                } else  {
+	        } else  {
 				//recv from my server
 				memcpy(&wp, buffer,count);				
 				//printf("recv from my server %d,wp.size=%d,count=%d\n",sizeof(struct wrap_pkt)-BUFSIZE+wp.size-count,wp.size,count);
@@ -498,10 +514,10 @@ int use_tunnel(void)
 					xrecv((char *)&wp+count, sizeof(struct wrap_pkt)-BUFSIZE+wp.size-count,rc.remote_socket);
 				}
 
-            		dbufl=dodec(&wp, buffer);
+            	dbufl=dodec(&wp, buffer);
 			//printf("send to real client\n");
 			//send to real client
-	                send(rc.client_socket, buffer, dbufl, 0);
+	            send(rc.client_socket, buffer, dbufl, 0);
             }
 			
 						 

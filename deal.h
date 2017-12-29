@@ -1,6 +1,6 @@
 
 
-#define  BUFSIZE 4096*4
+#define  BUFSIZE (1024*128)
 #define  MAGIC 0x20131102
 
 struct wrap_pkt {

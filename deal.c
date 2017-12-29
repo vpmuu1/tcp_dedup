@@ -74,7 +74,7 @@ long doenc(const char *inbuf, const long ilen, struct wrap_pkt *owp){
 			}
 		}
 	} else {		
-		//printf("owp->size=%d \n",owp->size);
+		printf("owp->size=%d \n",owp->size);
 	}
 	//
 //	show(owp->md5);
